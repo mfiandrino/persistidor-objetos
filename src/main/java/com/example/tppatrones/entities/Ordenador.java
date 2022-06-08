@@ -2,6 +2,8 @@ package com.example.tppatrones.entities;
 
 import com.example.tppatrones.Persistable;
 
+import java.util.ArrayList;
+
 public class Ordenador {
     @Persistable
     private int potencia;
@@ -9,8 +11,26 @@ public class Ordenador {
     private String nombre;
     @Persistable
     private Procesador CPU;
+
+
+    @Persistable
+    private ArrayList<String> listaDeMemorias;
+
+    public Ordenador(String nombre, int pot){
+        this.setNombre(nombre);
+        this.setPotencia(pot);
+    }
+
     public Procesador getCPU() {
         return CPU;
+    }
+
+    public ArrayList<String> getListaDeMemorias() {
+        return listaDeMemorias;
+    }
+
+    public void setListaDeMemorias(ArrayList<String> listaDeMemorias) {
+        this.listaDeMemorias = listaDeMemorias;
     }
 
 
@@ -32,10 +52,6 @@ public class Ordenador {
         this.potencia = potencia;
     }
 
-    public Ordenador(String nombre, int pot){
-        this.setNombre(nombre);
-        this.setPotencia(pot);
-    }
 
     public String getNomPot(){
         return "Nombre"+this.getNombre()+" "+this.getPotencia();

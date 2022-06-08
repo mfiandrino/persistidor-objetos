@@ -2,6 +2,7 @@ package com.example.tppatrones;
 
 import java.lang.reflect.Field;
 import java.sql.Types;
+import java.util.ArrayList;
 
 public class PersistentObject {
     // Almacena la instancia del objeto o asociada a la clave sId,
@@ -66,30 +67,34 @@ public class PersistentObject {
         Boolean isObjectPersistible = o.getClass().isAnnotationPresent(Persistable.class);
         Field[] fields = o.getClass().getDeclaredFields();
         String className = o.getClass().getSimpleName();
-        System.out.println(className);
-        //
         for(Field f: fields){
+            System.out.println("----------");
+            System.out.println(f.getName());
+            System.out.println(f.getGenericType());
             if((isObjectPersistible && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible && f.isAnnotationPresent(Persistable.class) )) {
                 //Checks if field is object.
-                if( !f.getType().isPrimitive() && !f.getType().getSimpleName().equals("String")){
+                if( !f.getType().isPrimitive() && !f.getType().getSimpleName().equals("String") && !f.getGenericType().toString().contains("ArrayList")){
                     f.setAccessible(true);
                     Object val = f.get(o);
                     // if this field contains an object, function call itself.
-                    saveObject(val, sID);
-                } else if(f.getClass().isArray()){ //what happens if it is a list or any other collection type?
+                    //saveObject(val, sID);
+                    System.out.println("Object type");
+                } else if(f.getGenericType().toString().contains("ArrayList")){ //what happens if it is a list or any other collection type?
                     //save as array method
                     // saves the field in database, then saves each field of the array in the database.
                     // if array of primitive values or array of objects.
-
+                    System.out.println("Array list element");
+                    f.setAccessible(true);
+                    ArrayList value = (ArrayList) f.get(o);
+                    //get type f first element
+                    String elementsType = value.get(0).getClass().getSimpleName();
+                    System.out.println(elementsType);
                 } else {
                     //is primitive field. Save directly in attribute table.
-                    f.setAccessible(true);
-                    Object value = f.get(o);
-                    String type = f.getGenericType().toString();
-                    System.out.println(value);
-                    //save value in database using object id
+                   // f.setAccessible(true);
+                    //Object value = f.get(o);
+                    System.out.println("Primitive(string, int, double, etc)");
                 }
-
             }
         }
     }
