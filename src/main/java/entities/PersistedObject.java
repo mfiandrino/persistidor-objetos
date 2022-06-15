@@ -14,9 +14,24 @@ public class PersistedObject extends PersistentEntity {
   @JoinColumn(name="object_id", nullable=false)
   private List<Attribute> attributes;
 
+  public PersistedObject() {
+  }
+
   public PersistedObject(long ssId, String className, List<Attribute> attributes) {
     this.ssId = ssId;
     this.className = className;
     this.attributes = attributes;
+  }
+
+  public long getSsId() {
+    return ssId;
+  }
+
+  public String getClassName() {
+    return className;
+  }
+
+  public List<Attribute> getAttributes() {
+    return attributes;
   }
 }

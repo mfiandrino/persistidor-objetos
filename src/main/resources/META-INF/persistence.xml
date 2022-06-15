@@ -18,10 +18,10 @@
             <property name="hibernate.connection.username" value="root" />
             <property name="hibernate.connection.password" value="admin" />
 
-            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.show_sql" value="false" />
             <!-- Enable the logging of all the generated SQL statements to the console -->
 
-            <property name="hibernate.format_sql" value="true" />
+            <property name="hibernate.format_sql" value="false" />
             <!-- Format the generated SQL statement to make it more readable -->
 
             <property name="use_sql_comments" value="true" />

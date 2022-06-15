@@ -3,17 +3,16 @@ package objects;
 import entities.NotPersistable;
 import entities.Persistable;
 
-
+@Persistable
 public class Direccion {
-	@Persistable
 	private String calle;
-	@Persistable
-	private int numero;
+	private Integer numero;
 	private String codigoPostal;
 	private String localidad;
-	@Persistable
 	private String provincia;
 	private String pais;
+
+	public Direccion(){};
 
 	public Direccion(String calle, int numero, String codigoPostal, String localidad, String provincia, String pais) {
 		this.calle = calle;
@@ -23,6 +22,7 @@ public class Direccion {
 		this.provincia = provincia;
 		this.pais = pais;
 	}
+
 
 	public String getCalle()
 	{
