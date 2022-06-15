@@ -1,10 +1,17 @@
 package objects;
 
+import entities.NotPersistable;
+import entities.Persistable;
+
+
 public class Direccion {
+	@Persistable
 	private String calle;
+	@Persistable
 	private int numero;
 	private String codigoPostal;
 	private String localidad;
+	@Persistable
 	private String provincia;
 	private String pais;
 

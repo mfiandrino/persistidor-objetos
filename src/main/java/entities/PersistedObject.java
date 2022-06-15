@@ -7,15 +7,16 @@ import java.util.List;
 @Table
 public class PersistedObject extends PersistentEntity {
   @Column
-  private int ssId;
+  private long ssId;
+  @Column
+  private String className;
   @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
   @JoinColumn(name="object_id", nullable=false)
   private List<Attribute> attributes;
 
-  public PersistedObject(int ssId, List<Attribute> attributes) {
+  public PersistedObject(long ssId, String className, List<Attribute> attributes) {
     this.ssId = ssId;
+    this.className = className;
     this.attributes = attributes;
   }
-
-
 }
