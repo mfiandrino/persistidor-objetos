@@ -7,19 +7,21 @@ import entities.Persistable;
 import entities.PersistedObject;
 import objects.Direccion;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import javax.persistence.NoResultException;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PersistentObject {
 
   public boolean store(long sId, Object o) throws IllegalAccessException {
-    PersistedObject perObj = crearPersistedObject(sId,o);
-    EntityManagerHelper.beginTransaction();
-    EntityManagerHelper.getEntityManager().persist(perObj);
-    EntityManagerHelper.commit();
-    return true;
+
+      System.out.println("No Existe y vamos a almacenar");
+      PersistedObject perObj = crearPersistedObject(sId,o);
+      EntityManagerHelper.beginTransaction();
+      EntityManagerHelper.getEntityManager().persist(perObj);
+      EntityManagerHelper.commit();
+      return true;
   }
 
   private PersistedObject crearPersistedObject(long sId, Object o) throws IllegalAccessException {
@@ -43,30 +45,40 @@ public class PersistentObject {
     return new PersistedObject(sId, className, attributes);
   }
 
-  public <T> T load(long sId, Class<T> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public <T> T load(long sId, Class<T> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
-    PersistedObject direRecuperada = (PersistedObject) EntityManagerHelper.createQuery("from PersistedObject where id = '2'").getSingleResult();
+    String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
+    PersistedObject object = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
 
-    List<Attribute> atts = direRecuperada.getAttributes();
+    Class<?> clazz2 = Class.forName(object.getClassName());
+    Object instance = clazz2.newInstance();
 
-    Class<?> clazz2 = Class.forName(direRecuperada.getClassName());
+    // Object instance = clazz.newInstance(); // Esto solo me parece que es suficiente
+    List<Attribute> atts = object.getAttributes();
 
-    Object instance = clazz.newInstance();
+    for(Attribute att: atts) {
+      //Attribute
+      Class<?> attClazz = Class.forName(att.getDataType());
+      Constructor<?> attConstructor = attClazz.getConstructor(String.class);
+      Object attInstance = attConstructor.newInstance(att.getValue());
 
-    //hay que setear los atributos con los setters de la clase utilizando invokes
-    /*for ( cada att){
-        instance.getDeclareMethod("set"+att.getName()).invoke();
+      //Setter
+      String attName = att.getName();
+      String attNameCapitalized = attName.substring(0,1).toUpperCase() + attName.substring(1);
+      String setterName = "set" + attNameCapitalized;
+      Method setter = clazz2.getDeclaredMethod(setterName, Class.forName(att.getDataType()));
+      setter.invoke(instance, attInstance);
     }
-
-    System.out.println(instance.getCalle());
-    System.out.println(instance.getNumero());
-
-*/
-
-    return null;
+    return (T) instance;
   }
 
   public <T> boolean exists(long sId, Class<T> clazz) {
+    String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
+    try {
+      PersistedObject object = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
+    } catch (NoResultException e) {
+      return false;
+    }
     return true;
   }
 
@@ -74,7 +86,16 @@ public class PersistentObject {
     return 1;
   }
 
-  public <T> T delete(long sId, Class<T> clazz) {
-    return null;
+  public <T> T delete(long sId, Class<T> clazz) throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+    T object = null;
+    if (exists(sId, clazz)) {
+      object = load(sId,clazz);
+      String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
+      PersistedObject persistedObject = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
+      EntityManagerHelper.beginTransaction();
+      EntityManagerHelper.getEntityManager().remove(persistedObject);
+      EntityManagerHelper.commit();
+    }
+    return object;
   }
 }

@@ -34,4 +34,8 @@ public class PersistedObject extends PersistentEntity {
   public List<Attribute> getAttributes() {
     return attributes;
   }
+
+  public void setAttributes(List<Attribute> attributes) {
+    this.attributes = attributes;
+  }
 }
