@@ -6,8 +6,9 @@ import java.util.List;
 @Entity
 @Table
 public class PersistedObject extends PersistentEntity {
+
   @Column
-  private long ssId;
+  private Long ssId;
   @Column
   private String className;
   @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
@@ -17,13 +18,13 @@ public class PersistedObject extends PersistentEntity {
   public PersistedObject() {
   }
 
-  public PersistedObject(long ssId, String className, List<Attribute> attributes) {
+  public PersistedObject(Long ssId, String className, List<Attribute> attributes) {
     this.ssId = ssId;
     this.className = className;
     this.attributes = attributes;
   }
 
-  public long getSsId() {
+  public Long getSsId() {
     return ssId;
   }
 
