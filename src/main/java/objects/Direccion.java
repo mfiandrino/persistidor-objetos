@@ -6,7 +6,7 @@ import entities.Persistable;
 @Persistable
 public class Direccion {
 	private String calle;
-	private Integer numero;
+	private int numero;
 	private String codigoPostal;
 	private String localidad;
 	private String provincia;

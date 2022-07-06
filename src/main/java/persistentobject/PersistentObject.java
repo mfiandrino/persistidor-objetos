@@ -18,15 +18,25 @@ public class PersistentObject {
   private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
   static {
     WRAPPER_TYPE_MAP = new HashMap<Class<?>, Class<?>>(16);
-    WRAPPER_TYPE_MAP.put(Integer.class, int.class);
-    WRAPPER_TYPE_MAP.put(Byte.class, byte.class);
-    WRAPPER_TYPE_MAP.put(Character.class, char.class);
-    WRAPPER_TYPE_MAP.put(Boolean.class, boolean.class);
-    WRAPPER_TYPE_MAP.put(Double.class, double.class);
-    WRAPPER_TYPE_MAP.put(Float.class, float.class);
-    WRAPPER_TYPE_MAP.put(Long.class, long.class);
-    WRAPPER_TYPE_MAP.put(Short.class, short.class);
-    WRAPPER_TYPE_MAP.put(Void.class, void.class);
+    WRAPPER_TYPE_MAP.put(Integer.class, Integer.class);
+    WRAPPER_TYPE_MAP.put(Byte.class, Byte.class);
+    WRAPPER_TYPE_MAP.put(Character.class, Character.class);
+    WRAPPER_TYPE_MAP.put(Boolean.class, Boolean.class);
+    WRAPPER_TYPE_MAP.put(Double.class, Double.class);
+    WRAPPER_TYPE_MAP.put(Float.class, Float.class);
+    WRAPPER_TYPE_MAP.put(Long.class, Long.class);
+    WRAPPER_TYPE_MAP.put(Short.class, Short.class);
+    WRAPPER_TYPE_MAP.put(Void.class, Void.class);
+    WRAPPER_TYPE_MAP.put(int.class, Integer.class);
+    WRAPPER_TYPE_MAP.put(byte.class, Byte.class);
+    WRAPPER_TYPE_MAP.put(char.class, Character.class);
+    WRAPPER_TYPE_MAP.put(boolean.class, Boolean.class);
+    WRAPPER_TYPE_MAP.put(double.class, Double.class);
+    WRAPPER_TYPE_MAP.put(float.class, Float.class);
+    WRAPPER_TYPE_MAP.put(long.class, Long.class);
+    WRAPPER_TYPE_MAP.put(short.class, Short.class);
+    WRAPPER_TYPE_MAP.put(void.class, Void.class);
+    WRAPPER_TYPE_MAP.put(String.class, String.class);
   }
 
   public boolean store(long sId, Object o) throws IllegalAccessException {
@@ -64,31 +74,40 @@ public class PersistentObject {
     }
   }*/
 
-  private Boolean isObject(Class<?> clazz) {
-    return !WRAPPER_TYPE_MAP.containsKey(clazz) && !clazz.equals(String.class);
+  private Boolean isCustomObject(Class<?> clazz) {
+    return !WRAPPER_TYPE_MAP.containsKey(clazz);
+  }
+
+  private Boolean isObjectPersistible(Object o) {
+    return o.getClass().isAnnotationPresent(Persistable.class);
   }
 
   private PersistedObject crearPersistedObject(Long sId, Object o) throws IllegalAccessException {
     List<Attribute> attributes = new ArrayList<>();
 
-    Boolean isObjectPersistible = o.getClass().isAnnotationPresent(Persistable.class);
     Field[] fields = o.getClass().getDeclaredFields();
     String className = o.getClass().getCanonicalName();
 
     for (Field f : fields) {
-      if((isObjectPersistible && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible && f.isAnnotationPresent(Persistable.class) )) {
+      if((isObjectPersistible(o) && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible(o) && f.isAnnotationPresent(Persistable.class) )) {
         f.setAccessible(true);
-        if(isObject(f.getType())) {
-          System.out.println(f.getName() + " es objeto");
-          PersistedObject perObj = crearPersistedObject(null, f.get(o));
+        if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
+          PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
           EntityManagerHelper.beginTransaction();
           EntityManagerHelper.getEntityManager().persist(perObj);
           EntityManagerHelper.commit();
-          Attribute att = new Attribute(f.getName(),f.getType().toString().replace("class ", ""),null, perObj.getId());
+          Attribute att = new Attribute(f.getName(),
+              f.getType().toString().replace("class ", ""),
+              null,
+              perObj.getId());
+
           attributes.add(att);
-        } else {
-          System.out.println(f.getName() + " no es objeto");
-          Attribute att = new Attribute(f.getName(), f.getType().toString().replace("class ", ""), f.get(o).toString(),null);
+        } else { //Si es un tipo primitivo o alguno de sus wrappers
+          Attribute att = new Attribute(f.getName(),
+              WRAPPER_TYPE_MAP.get(f.getType()).toString().replace("class ", ""),
+              f.get(o).toString(),
+              null);
+
           attributes.add(att);
           }
         }
@@ -103,35 +122,35 @@ public class PersistentObject {
   }
 
   private Object getObjectFromPersistedObjectQuery(String query) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-    PersistedObject object = (PersistedObject) EntityManagerHelper.createQuery(query).getSingleResult();
+    PersistedObject persistedObject = (PersistedObject) EntityManagerHelper.createQuery(query).getSingleResult(); //Levanto un PersistedObject de la DB
 
-    Class<?> clazz = Class.forName(object.getClassName());
-    Object instance = clazz.newInstance();
+    Class<?> clazz = Class.forName(persistedObject.getClassName()); //Creo una instancia Class de la clase del objecto levantado para poder instanciarlo
+    Object realObject = clazz.newInstance(); //Creo una instancia de la clase, consiguiendo un objeto
 
-    List<Attribute> atts = object.getAttributes();
+    List<Attribute> atts = persistedObject.getAttributes(); //Caputuro los atributos del PersistedObject
 
     for (Attribute att : atts) {
 
-      Class<?> attClazz = Class.forName(att.getDataType());
+      Class<?> attClazz = Class.forName(att.getDataType()); //Creo una instancia Class de la clase del atributo para poder instanciarlo
       Object attInstance = null;
 
-      if (isObject(attClazz)) { //Object Attribute
-        String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'";
-        attInstance = getObjectFromPersistedObjectQuery(hql);
+      if (isCustomObject(attClazz)) { //Si el atributo del objeto original no es un objecto primitivo
+        String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
+        attInstance = getObjectFromPersistedObjectQuery(hql); //Y lo asigno a la instancia del atributo
 
-      } else { //Primitive Attribute
-        Constructor<?> attConstructor = attClazz.getConstructor(String.class);
-        attInstance = attConstructor.newInstance(att.getValue());
+      } else { //Si el atributo es primitivo o es uno de sus wrappers
+        Constructor<?> attConstructor = attClazz.getConstructor(String.class); //Obtengo el constructor cuyo parametro recibe un String del atributo
+        attInstance = attConstructor.newInstance(att.getValue()); //Le asigno una instancia
       }
 
-      //Setter
+      //Armado del setter del atributo
       String attName = att.getName();
       String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
       String setterName = "set" + attNameCapitalized;
       Method setter = clazz.getDeclaredMethod(setterName, attClazz);
-      setter.invoke(instance, attInstance);
+      setter.invoke(realObject, attInstance);
     }
-    return instance;
+    return realObject;
   }
 
 
