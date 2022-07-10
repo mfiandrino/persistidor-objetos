@@ -1,7 +1,10 @@
 package objects;
 
+import entities.Persistable;
+
 import java.util.ArrayList;
 
+@Persistable
 public class Persona3
 {
 	private int dni;

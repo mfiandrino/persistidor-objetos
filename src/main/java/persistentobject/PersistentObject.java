@@ -39,6 +39,7 @@ public class PersistentObject {
     WRAPPER_TYPE_MAP.put(String.class, String.class);
   }
 
+
   public boolean store(long sId, Object o) throws IllegalAccessException {
     /*if (exists(sId, o.getClass())) {
       System.out.println("Existe y vamos a actualizar");
@@ -104,7 +105,7 @@ public class PersistentObject {
           attributes.add(att);
         } else { //Si es un tipo primitivo o alguno de sus wrappers
           Attribute att = new Attribute(f.getName(),
-              WRAPPER_TYPE_MAP.get(f.getType()).toString().replace("class ", ""),
+              f.getType().toString().replace("class ", ""),
               f.get(o).toString(),
               null);
 
@@ -130,25 +131,74 @@ public class PersistentObject {
     List<Attribute> atts = persistedObject.getAttributes(); //Caputuro los atributos del PersistedObject
 
     for (Attribute att : atts) {
+        //Armado del setter del atributo
+        String attName = att.getName();
+        String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
+        String setterName = "set" + attNameCapitalized;
 
-      Class<?> attClazz = Class.forName(att.getDataType()); //Creo una instancia Class de la clase del atributo para poder instanciarlo
-      Object attInstance = null;
+        Class[] cArg = new Class[1];//declaro la lista de uno de atributos a pasar a getDeclaredMethod()
+        switch(att.getDataType()){ //Reviso si es un tipo primitivo
+            case "int":
+                int intValue=Integer.parseInt(att.getValue());
+                cArg[0] = int.class;
+                Method intSetter = clazz.getDeclaredMethod(setterName,cArg);
+                intSetter.invoke(realObject, intValue);
+                break;
+            case "char":
+                char charValue = att.getValue().charAt(0);
+                cArg[0] = char.class;
+                Method charSetter = clazz.getDeclaredMethod(setterName,cArg);
+                charSetter.invoke(realObject, charValue);
+                break;
+            case "boolean":
+                boolean boolValue = Boolean.parseBoolean(att.getValue());
+                cArg[0] = boolean.class;
+                Method boolSetter = clazz.getDeclaredMethod(setterName,cArg);
+                boolSetter.invoke(realObject, boolValue);
+                break;
+            case "double":
+                double doubleValue = Double.parseDouble(att.getValue());
+                cArg[0] = double.class;
+                Method doubleSetter = clazz.getDeclaredMethod(setterName,cArg);
+                doubleSetter.invoke(realObject, doubleValue);
+                break;
 
-      if (isCustomObject(attClazz)) { //Si el atributo del objeto original no es un objecto primitivo
-        String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
-        attInstance = getObjectFromPersistedObjectQuery(hql); //Y lo asigno a la instancia del atributo
+            case "float":
+                float floatValue = Float.parseFloat(att.getValue());
+                cArg[0] = float.class;
+                Method floatSetter = clazz.getDeclaredMethod(setterName,cArg);
+                floatSetter.invoke(realObject, floatValue);
+                break;
 
-      } else { //Si el atributo es primitivo o es uno de sus wrappers
-        Constructor<?> attConstructor = attClazz.getConstructor(String.class); //Obtengo el constructor cuyo parametro recibe un String del atributo
-        attInstance = attConstructor.newInstance(att.getValue()); //Le asigno una instancia
-      }
+            case  "long":
+                long longValue = Long.parseLong(att.getValue());
+                cArg[0] = long.class;
+                Method longtSetter = clazz.getDeclaredMethod(setterName,cArg);
+                longtSetter.invoke(realObject, longValue);
+                break;
 
-      //Armado del setter del atributo
-      String attName = att.getName();
-      String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
-      String setterName = "set" + attNameCapitalized;
-      Method setter = clazz.getDeclaredMethod(setterName, attClazz);
-      setter.invoke(realObject, attInstance);
+            case  "short":
+                short shortValue = Short.parseShort(att.getValue());
+                cArg[0] = short.class;
+                Method shortSetter = clazz.getDeclaredMethod(setterName,cArg);
+                shortSetter.invoke(realObject, shortValue);
+                break;
+
+            default://Sino no es un tipo primitivo...
+                Class<?> attClazz = Class.forName(att.getDataType()); //Creo una instancia Class de la clase del atributo para poder instanciarlo
+                Object attInstance = null;
+                if (isCustomObject(attClazz)) { //Si el atributo del objeto original no es un objecto primitivo
+                    String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
+                    attInstance = getObjectFromPersistedObjectQuery(hql); //Y lo asigno a la instancia del atributo
+
+                } else { //Si el atributo es wrapper
+                    Constructor<?> attConstructor = attClazz.getConstructor(String.class); //Obtengo el constructor cuyo parametro recibe un String del atributo
+                    attInstance = attConstructor.newInstance(att.getValue()); //Le asigno una instancia
+                }
+
+                Method setter = clazz.getDeclaredMethod(setterName, attClazz);
+                setter.invoke(realObject, attInstance);
+        }
     }
     return realObject;
   }

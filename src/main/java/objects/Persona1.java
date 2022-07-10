@@ -1,9 +1,16 @@
 package objects;
 
+import entities.Persistable;
+
+@Persistable
 public class Persona1
 {
 	private int dni;
 	private String nombre;
+
+	private float altura;
+
+	private char letraFavorita;
 	public int getDni()
 	{
 		return dni;
@@ -20,6 +27,12 @@ public class Persona1
 	{
 		this.nombre=nombre;
 	}
-	
-	
+
+	public char getLetraFavorita() {return letraFavorita;}
+
+	public void setLetraFavorita(char letraFavorita) {this.letraFavorita = letraFavorita;}
+
+	public float getAltura() {return altura;}
+
+	public void setAltura(float altura) {this.altura = altura;}
 }
