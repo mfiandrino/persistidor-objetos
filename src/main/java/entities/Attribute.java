@@ -15,13 +15,10 @@ public class Attribute extends PersistentEntity {
   @Column
   private String value;
 
-  //@OneToOne(cascade={CascadeType.ALL})
-  //@JoinColumn(name="attribute_objets_id",referencedColumnName = "id");
   @Column
   private Integer attributeObjectId;
 
-    //int id->objeto_persistido
-
+  //Creo que hay que agragarle un collectionElement_id con onToMany
 
   public Attribute() {
   }

@@ -1,10 +1,7 @@
 package persistentobject;
 
 import db.EntityManagerHelper;
-import entities.Attribute;
-import entities.NotPersistable;
-import entities.Persistable;
-import entities.PersistedObject;
+import entities.*;
 
 import javax.persistence.NoResultException;
 import java.lang.reflect.*;
@@ -92,18 +89,47 @@ public class PersistentObject {
     for (Field f : fields) {
       if((isObjectPersistible(o) && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible(o) && f.isAnnotationPresent(Persistable.class) )) {
         f.setAccessible(true);
-        if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
-          PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
-          EntityManagerHelper.beginTransaction();
-          EntityManagerHelper.getEntityManager().persist(perObj);
-          EntityManagerHelper.commit();
-          Attribute att = new Attribute(f.getName(),
-              f.getType().toString().replace("class ", ""),
-              null,
-              perObj.getId());
+
+       /* if(f.getType().isArray()) {//Si es un array
+
+            Class elementDataType = f.getType().getComponentType();
+            Attribute att = new Attribute(f.getName(),
+                    f.getType().toString().replace("class ", ""),
+                    null,
+                    null);
+
+            ArrayList<?> lista = (ArrayList<?>)f.get(o);
+
+            if(isCustomObject(elementDataType)){ //Si es un array de objetos
+                for(int i=0;i<lista.size();i++) {
+
+                    Object element = lista.get(i);
+
+                                                                        //No tenemos el id del attribute hasta despuiés de git apersistirlo
+                    collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
+                }
+            }else{
+                for(int i=0;i<lista.size();i++) { //Si es un array de primitivos, wrappers o strings
+                    collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
+
+                    Habría que agragarlo a una lista de elementos de Attribute y linkearlo con OneToMany
+                }
+            }
+
+
+        }else */if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
+            PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
+            EntityManagerHelper.beginTransaction();
+            EntityManagerHelper.getEntityManager().persist(perObj);
+            EntityManagerHelper.commit();
+            Attribute att = new Attribute(f.getName(),
+                f.getType().toString().replace("class ", ""),
+            null,
+                perObj.getId());
 
           attributes.add(att);
-        } else { //Si es un tipo primitivo o alguno de sus wrappers
+        }else{ //Si es un tipo primitivo o alguno de sus wrappers
+            }
           Attribute att = new Attribute(f.getName(),
               f.getType().toString().replace("class ", ""),
               f.get(o).toString(),
@@ -112,7 +138,7 @@ public class PersistentObject {
           attributes.add(att);
           }
         }
-      }
+
     return new PersistedObject(sId, className, attributes);
   }
 
