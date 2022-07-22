@@ -256,4 +256,4 @@ public class PersistentObject {
     }
     return object;
   }
-}
+} //No borra recursivamente objetos dentro de objetos
