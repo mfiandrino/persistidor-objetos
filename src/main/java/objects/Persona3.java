@@ -11,10 +11,17 @@ public class Persona3
 	private String nombre;
 	private ArrayList<String> telefonos;
 	private ArrayList<Direccion> direcciones;
-	
-	
-	
-	
+
+	public Persona3() {
+	}
+
+	public Persona3(int dni, String nombre, ArrayList<String> telefonos, ArrayList<Direccion> direcciones) {
+		this.dni = dni;
+		this.nombre = nombre;
+		this.telefonos = telefonos;
+		this.direcciones = direcciones;
+	}
+
 	public ArrayList<Direccion> getDirecciones()
 	{
 		return direcciones;

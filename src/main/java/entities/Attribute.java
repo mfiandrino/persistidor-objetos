@@ -14,9 +14,12 @@ public class Attribute extends PersistentEntity {
   private String dataType;
   @Column
   private String value;
-
   @Column
   private Integer attributeObjectId;
+
+  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+  @JoinColumn(name="attribute_id", nullable=false)
+  private List<CollectionElement> collectionElements;
 
   //Creo que hay que agragarle un collectionElement_id con onToMany
 
@@ -28,6 +31,14 @@ public class Attribute extends PersistentEntity {
     this.dataType = dataType;
     this.value = value;
     this.attributeObjectId = attributeObjectId;
+  }
+
+  public List<CollectionElement> getCollectionElements() {
+    return collectionElements;
+  }
+
+  public void setCollectionElements(List<CollectionElement> collectionElements) {
+    this.collectionElements = collectionElements;
   }
 
   public String getName() {

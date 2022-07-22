@@ -92,29 +92,44 @@ public class PersistentObject {
 
        /* if(f.getType().isArray()) {//Si es un array
 
-            Class elementDataType = f.getType().getComponentType();
-            Attribute att = new Attribute(f.getName(),
-                    f.getType().toString().replace("class ", ""),
-                    null,
-                    null);
+          Class<?> elementDataType = f.getType().getComponentType();
+          Attribute att = new Attribute(f.getName(),
+                  f.getType().toString().replace("class ", ""),
+                  null,
+                  null);
 
-            ArrayList<?> lista = (ArrayList<?>)f.get(o);
+          ArrayList<?> lista = (ArrayList<?>)f.get(o);
 
-            if(isCustomObject(elementDataType)){ //Si es un array de objetos
-                for(int i=0;i<lista.size();i++) {
+          if(isCustomObject(elementDataType)){ //Si es un array de objetos
 
-                    Object element = lista.get(i);
+            lista.forEach(e -> {
+              PersistedObject perObj = null; //Creo una instancia de PersistedObject para persistirla luego
+              try {
+                perObj = crearPersistedObject(null, e);
+              } catch (IllegalAccessException ex) {
+                throw new RuntimeException(ex);
+              }
+              EntityManagerHelper.beginTransaction();
+              EntityManagerHelper.getEntityManager().persist(perObj);
+              EntityManagerHelper.commit();
+              CollectionElement collEl = new CollectionElement(elementDataType.toString(), null, perObj.getId());
+            });
+              *//*for(int i=0;i<lista.size();i++) {
 
-                                                                        //No tenemos el id del attribute hasta despuiés de git apersistirlo
-                    collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
-                }
-            }else{
-                for(int i=0;i<lista.size();i++) { //Si es un array de primitivos, wrappers o strings
-                    collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
+                  Object element = lista.get(i);
 
-                    Habría que agragarlo a una lista de elementos de Attribute y linkearlo con OneToMany
-                }
-            }
+                                                                      //No tenemos el id del attribute hasta despuiés de git apersistirlo
+                  CollectionElement collEl = new CollectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);*//*
+              }
+          }else{
+              Attribute att = new Attribute()
+              for(int i=0;i<lista.size();i++) { //Si es un array de primitivos, wrappers o strings
+                  collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
+
+                  Habría que agragarlo a una lista de elementos de Attribute y linkearlo con OneToMany
+
+              }
+          }
 
 
         }else */if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
@@ -162,12 +177,10 @@ public class PersistentObject {
         String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
         String setterName = "set" + attNameCapitalized;
 
-        Class[] cArg = new Class[1];//declaro la lista de uno de atributos a pasar a getDeclaredMethod()
         switch(att.getDataType()){ //Reviso si es un tipo primitivo
             case "int":
                 int intValue=Integer.parseInt(att.getValue());
-                //cArg[0] = int.class;
-                Method intSetter = clazz.getDeclaredMethod(setterName,int.class);
+                Method intSetter = clazz.getDeclaredMethod(setterName, int.class);
                 intSetter.invoke(realObject, intValue);
                 break;
             case "char":
@@ -178,35 +191,30 @@ public class PersistentObject {
                 break;
             case "boolean":
                 boolean boolValue = Boolean.parseBoolean(att.getValue());
-                cArg[0] = boolean.class;
-                Method boolSetter = clazz.getDeclaredMethod(setterName,cArg);
+                Method boolSetter = clazz.getDeclaredMethod(setterName,boolean.class);
                 boolSetter.invoke(realObject, boolValue);
                 break;
             case "double":
                 double doubleValue = Double.parseDouble(att.getValue());
-                cArg[0] = double.class;
-                Method doubleSetter = clazz.getDeclaredMethod(setterName,cArg);
+                Method doubleSetter = clazz.getDeclaredMethod(setterName,double.class);
                 doubleSetter.invoke(realObject, doubleValue);
                 break;
 
             case "float":
                 float floatValue = Float.parseFloat(att.getValue());
-                //cArg[0] = float.class;
                 Method floatSetter = clazz.getDeclaredMethod(setterName,float.class);
                 floatSetter.invoke(realObject, floatValue);
                 break;
 
             case  "long":
                 long longValue = Long.parseLong(att.getValue());
-                cArg[0] = long.class;
-                Method longtSetter = clazz.getDeclaredMethod(setterName,cArg);
+                Method longtSetter = clazz.getDeclaredMethod(setterName,long.class);
                 longtSetter.invoke(realObject, longValue);
                 break;
 
             case  "short":
                 short shortValue = Short.parseShort(att.getValue());
-                cArg[0] = short.class;
-                Method shortSetter = clazz.getDeclaredMethod(setterName,cArg);
+                Method shortSetter = clazz.getDeclaredMethod(setterName,short.class);
                 shortSetter.invoke(realObject, shortValue);
                 break;
 

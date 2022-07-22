@@ -2,6 +2,7 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import objects.ClaseFantasma;
 import objects.Direccion;
 import objects.Persona1;
 import objects.Persona4;
@@ -21,6 +22,12 @@ public class PersistentObjectTest {
   }
 
   @Test
+  public void prueba() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    ClaseFantasma c = new ClaseFantasma();
+    persistentObject.store(1, c);
+  }
+
+  @Test
   public void unObjetoConAtributosPrimitivosSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
     Persona1 persona = new Persona1(12345678, "Pedro", 45, 'v');
     persistentObject.store(1, persona);
@@ -31,7 +38,7 @@ public class PersistentObjectTest {
     assertEquals("Pedro", personaRecuperada.getNombre());
     assertEquals(45, personaRecuperada.getAltura());
     assertEquals('v', personaRecuperada.getLetraFavorita());
-    }
+  }
 
   @Test
   public void unObjetoConAtributosWrappersDePrimitivosSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
