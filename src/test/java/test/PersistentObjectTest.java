@@ -3,26 +3,39 @@ package test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import objects.Direccion;
+import objects.Persona1;
 import objects.Persona4;
-import org.junit.Test;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import persistentobject.PersistentObject;
 
 import java.lang.reflect.InvocationTargetException;
 
 public class PersistentObjectTest {
-  PersistentObject persistentObject;
+  private PersistentObject persistentObject;
 
   @BeforeEach
-  void initialize() {
+  public void initialize() {
     persistentObject = new PersistentObject();
-//    PersistentObject persistentObject = new PersistentObject();
   }
 
   @Test
-  public void unObjetoConAtributosPrimitivosOSusWrappersSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+  public void unObjetoConAtributosPrimitivosSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    Persona1 persona = new Persona1(12345678, "Pedro", 45, 'v');
+    persistentObject.store(1, persona);
+
+    Persona1 personaRecuperada = persistentObject.load(1, persona.getClass());
+
+    assertEquals(12345678, personaRecuperada.getDni());
+    assertEquals("Pedro", personaRecuperada.getNombre());
+    assertEquals(45, personaRecuperada.getAltura());
+    assertEquals('v', personaRecuperada.getLetraFavorita());
+    }
+
+  @Test
+  public void unObjetoConAtributosWrappersDePrimitivosSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
     Direccion direccion = new Direccion("Medrano",22,"C1920","CABA","BA","Argentina");
-    PersistentObject persistentObject = new PersistentObject();
     persistentObject.store(2,direccion);
 
     Direccion direccionRecuperada = persistentObject.load(2, direccion.getClass());
@@ -39,7 +52,6 @@ public class PersistentObjectTest {
   public void unObjetoConOtroObjetoComoAtributoSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
     Direccion direccion = new Direccion("Medrano",22,"C1920","CABA","BA","Argentina");
     Persona4 persona = new Persona4("Maxi", direccion);
-    PersistentObject persistentObject = new PersistentObject();
     persistentObject.store(3,persona);
 
     Persona4 personaRecuperada = persistentObject.load(3, persona.getClass());
@@ -52,5 +64,4 @@ public class PersistentObjectTest {
     assertEquals("BA", personaRecuperada.getDireccion().getProvincia());
     assertEquals("Argentina", personaRecuperada.getDireccion().getPais());
   }
-
 }

@@ -6,7 +6,7 @@ import entities.Persistable;
 @Persistable
 public class Direccion {
 	private String calle;
-	private int numero;
+	private Integer numero;
 	private String codigoPostal;
 	private String localidad;
 	private String provincia;
@@ -32,11 +32,11 @@ public class Direccion {
 	{
 		this.calle=calle;
 	}
-	public int getNumero()
+	public Integer getNumero()
 	{
 		return numero;
 	}
-	public void setNumero(int numero)
+	public void setNumero(Integer numero)
 	{
 		this.numero=numero;
 	}

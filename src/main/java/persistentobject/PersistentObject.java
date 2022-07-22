@@ -129,7 +129,7 @@ public class PersistentObject {
 
           attributes.add(att);
         }else{ //Si es un tipo primitivo o alguno de sus wrappers
-            }
+
           Attribute att = new Attribute(f.getName(),
               f.getType().toString().replace("class ", ""),
               f.get(o).toString(),
@@ -138,7 +138,7 @@ public class PersistentObject {
           attributes.add(att);
           }
         }
-
+    }
     return new PersistedObject(sId, className, attributes);
   }
 
@@ -166,14 +166,14 @@ public class PersistentObject {
         switch(att.getDataType()){ //Reviso si es un tipo primitivo
             case "int":
                 int intValue=Integer.parseInt(att.getValue());
-                cArg[0] = int.class;
-                Method intSetter = clazz.getDeclaredMethod(setterName,cArg);
+                //cArg[0] = int.class;
+                Method intSetter = clazz.getDeclaredMethod(setterName,int.class);
                 intSetter.invoke(realObject, intValue);
                 break;
             case "char":
                 char charValue = att.getValue().charAt(0);
-                cArg[0] = char.class;
-                Method charSetter = clazz.getDeclaredMethod(setterName,cArg);
+                //cArg[0] = char.class;
+                Method charSetter = clazz.getDeclaredMethod(setterName,char.class);
                 charSetter.invoke(realObject, charValue);
                 break;
             case "boolean":
@@ -191,8 +191,8 @@ public class PersistentObject {
 
             case "float":
                 float floatValue = Float.parseFloat(att.getValue());
-                cArg[0] = float.class;
-                Method floatSetter = clazz.getDeclaredMethod(setterName,cArg);
+                //cArg[0] = float.class;
+                Method floatSetter = clazz.getDeclaredMethod(setterName,float.class);
                 floatSetter.invoke(realObject, floatValue);
                 break;
 
