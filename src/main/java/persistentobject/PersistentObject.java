@@ -177,10 +177,27 @@ public class PersistentObject {
         perObj.getId());
   }
 
-  public <T> T load(long sId, Class<T> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+  public <T> T load(long sId, Class<T> clazz) {
 
     String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
-    return (T) getObjectFromPersistedObjectQuery(hql);
+
+    T object = null;
+
+    try {
+      object = (T) getObjectFromPersistedObjectQuery(hql);
+    } catch (ClassNotFoundException ex) {
+      throw new StructureChangedException();
+    } catch (InstantiationException ex) {
+      throw new StructureChangedException();
+    } catch (IllegalAccessException ex) {
+      throw new RuntimeException(ex);
+    } catch (NoSuchMethodException ex) {
+      throw new StructureChangedException();
+    } catch (InvocationTargetException ex) {
+      throw new StructureChangedException();
+    }
+
+    return object;
   }
 
   private Object getObjectFromPersistedObjectQuery(String query) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
@@ -278,15 +295,15 @@ public class PersistentObject {
                   }
                 }
               } catch (ClassNotFoundException ex) {
-                throw new RuntimeException(ex);
+                throw new StructureChangedException();
               } catch (InstantiationException ex) {
-                throw new RuntimeException(ex);
+                throw new StructureChangedException();
               } catch (IllegalAccessException ex) {
                 throw new RuntimeException(ex);
               } catch (NoSuchMethodException ex) {
-                throw new RuntimeException(ex);
+                throw new StructureChangedException();
               } catch (InvocationTargetException ex) {
-                throw new RuntimeException(ex);
+                throw new StructureChangedException();
               }
             }).collect(Collectors.toList());
 

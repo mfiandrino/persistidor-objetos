@@ -369,7 +369,11 @@ public class PersistentObjectTest {
 
     assertEquals("1234-5678", personaRecuperada2.getTelefonos().get(0));
     assertEquals("5678-1234", personaRecuperada2.getTelefonos().get(1));
+  }
 
-
+  @Test
+  public void unObjetoConValorNullSeGuarda() throws IllegalAccessException {
+    Direccion unaDireccion = null;
+    persistentObject.store(12, unaDireccion);
   }
 }
