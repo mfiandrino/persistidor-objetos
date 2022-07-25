@@ -150,8 +150,35 @@ public class PersistentObjectTest {
     telefonos.add("1234-5678");
     telefonos.add("5678-1234");
 
-
     Persona5 persona = new Persona5("Maxi", unaDireccion, direcciones, telefonos);
     persistentObject.store(8,persona);
+
+    Persona5 personaRecuperada = persistentObject.load(8, persona.getClass());
+
+    assertEquals("Maxi", personaRecuperada.getNombre());
+
+    assertEquals("Medrano", personaRecuperada.getDireccion().getCalle());
+    assertEquals(22, personaRecuperada.getDireccion().getNumero());
+    assertEquals("C1920", personaRecuperada.getDireccion().getCodigoPostal());
+    assertEquals("CABA", personaRecuperada.getDireccion().getLocalidad());
+    assertEquals("BA", personaRecuperada.getDireccion().getProvincia());
+    assertEquals("Argentina", personaRecuperada.getDireccion().getPais());
+
+    assertEquals("Medrano2", personaRecuperada.getDirecciones().get(0).getCalle());
+    assertEquals(222, personaRecuperada.getDirecciones().get(0).getNumero());
+    assertEquals("C19202", personaRecuperada.getDirecciones().get(0).getCodigoPostal());
+    assertEquals("CABA2", personaRecuperada.getDirecciones().get(0).getLocalidad());
+    assertEquals("BA2", personaRecuperada.getDirecciones().get(0).getProvincia());
+    assertEquals("Argentina2", personaRecuperada.getDirecciones().get(0).getPais());
+
+    assertEquals("Medrano3", personaRecuperada.getDirecciones().get(1).getCalle());
+    assertEquals(223, personaRecuperada.getDirecciones().get(1).getNumero());
+    assertEquals("C19203", personaRecuperada.getDirecciones().get(1).getCodigoPostal());
+    assertEquals("CABA3", personaRecuperada.getDirecciones().get(1).getLocalidad());
+    assertEquals("BA3", personaRecuperada.getDirecciones().get(1).getProvincia());
+    assertEquals("Argentina3", personaRecuperada.getDirecciones().get(1).getPais());
+
+    assertEquals("1234-5678", personaRecuperada.getTelefonos().get(0));
+    assertEquals("5678-1234", personaRecuperada.getTelefonos().get(1));
   }
 }

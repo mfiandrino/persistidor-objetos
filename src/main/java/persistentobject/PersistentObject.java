@@ -100,50 +100,8 @@ public class PersistentObject {
         f.setAccessible(true);
         Attribute att;
 
-       /* if(f.getType().isArray()) {//Si es un array
-
-          Class<?> elementDataType = f.getType().getComponentType();
-          Attribute att = new Attribute(f.getName(),
-                  f.getType().toString().replace("class ", ""),
-                  null,
-                  null);
-
-          ArrayList<?> lista = (ArrayList<?>)f.get(o);
-
-          if(isCustomObject(elementDataType)){ //Si es un array de objetos
-
-            lista.forEach(e -> {
-              PersistedObject perObj = null; //Creo una instancia de PersistedObject para persistirla luego
-              try {
-                perObj = crearPersistedObject(null, e);
-              } catch (IllegalAccessException ex) {
-                throw new RuntimeException(ex);
-              }
-              EntityManagerHelper.beginTransaction();
-              EntityManagerHelper.getEntityManager().persist(perObj);
-              EntityManagerHelper.commit();
-              CollectionElement collEl = new CollectionElement(elementDataType.toString(), null, perObj.getId());
-            });
-              *//*for(int i=0;i<lista.size();i++) {
-
-                  Object element = lista.get(i);
-
-                                                                      //No tenemos el id del attribute hasta despuiés de git apersistirlo
-                  CollectionElement collEl = new CollectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);*//*
-              }
-          }else{
-              Attribute att = new Attribute()
-              for(int i=0;i<lista.size();i++) { //Si es un array de primitivos, wrappers o strings
-                  collectionElement collEl = new collectionElement(i,att.getId(),elementDataType.toString(),lista.get(i).toString(),null);
-
-                  Habría que agragarlo a una lista de elementos de Attribute y linkearlo con OneToMany
-
-              }
-          }
-
-
-        }else */
-        if(f.getType().equals(ArrayList.class)) {
+        //if(f.getType().equals(ArrayList.class)) {
+        if(List.class.isAssignableFrom(f.getType())) {
           att = saveCollectionField(f,o);
         }
         else if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
@@ -157,17 +115,6 @@ public class PersistentObject {
     }
     return new PersistedObject(sId, className, attributes);
   }
-
-/*  private Attribute createAttribute(Field f, Object o) throws IllegalAccessException {
-    Attribute a = new Attribute(f.getName(),
-        f.getGenericType().toString(),
-        null,
-        null);
-    a.setCollectionElements((ArrayList<CollectionElement>) f.get(o));
-    //a.setId(1);
-
-    return a;
-  }*/
 
   private List<CollectionElement> convertToCollectionElementsList(List<?> list, Field f, Object o) {
     if(isCustomObject(getComponentType(list))) {
@@ -185,7 +132,6 @@ public class PersistentObject {
 
             return new CollectionElement(e.getClass().toString().replace("class ", ""), null, perObj.getId());
           }).collect(Collectors.toList());
-
     }
     else {
       return list.stream()
@@ -197,14 +143,6 @@ public class PersistentObject {
   }
 
   private Attribute saveCollectionField(Field f, Object o) throws IllegalAccessException {
-    /*ArrayList<?> list = (ArrayList<?>) f.get(o);
-    if(isCustomObject(getComponentType(list))) { // Si es una coleccion de objetos
-
-    }*/
-    /*Attribute att = createAttribute(f,o); //Creo una instancia de PersistedObject para persistirla luego
-    EntityManagerHelper.beginTransaction();
-    EntityManagerHelper.getEntityManager().persist(att);
-    EntityManagerHelper.commit();*/
     PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
 
     perObj.setCollectionElements(convertToCollectionElementsList((List<CollectionElement>) f.get(o), f, o));
@@ -213,10 +151,10 @@ public class PersistentObject {
     EntityManagerHelper.commit();
 
     return new Attribute(f.getName(),
-        f.getGenericType().toString(),
+        f.getType().toString().replace("class ", ""),
+        //f.getGenericType().toString(),
         null,
         perObj.getId());
-    //return null;
   }
 
   private Attribute savePrimitiveField(Field f, Object o) throws IllegalAccessException {
@@ -252,67 +190,117 @@ public class PersistentObject {
     List<Attribute> atts = persistedObject.getAttributes(); //Caputuro los atributos del PersistedObject
 
     for (Attribute att : atts) {
-        //Armado del setter del atributo
-        String attName = att.getName();
-        String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
-        String setterName = "set" + attNameCapitalized;
+      //Armado del setter del atributo
+      String attName = att.getName();
+      String attNameCapitalized = attName.substring(0, 1).toUpperCase() + attName.substring(1);
+      String setterName = "set" + attNameCapitalized;
 
-        switch(att.getDataType()){ //Reviso si es un tipo primitivo
-            case "int":
-                int intValue=Integer.parseInt(att.getValue());
-                Method intSetter = clazz.getDeclaredMethod(setterName, int.class);
-                intSetter.invoke(realObject, intValue);
-                break;
-            case "char":
-                char charValue = att.getValue().charAt(0);
-                //cArg[0] = char.class;
-                Method charSetter = clazz.getDeclaredMethod(setterName,char.class);
-                charSetter.invoke(realObject, charValue);
-                break;
-            case "boolean":
-                boolean boolValue = Boolean.parseBoolean(att.getValue());
-                Method boolSetter = clazz.getDeclaredMethod(setterName,boolean.class);
-                boolSetter.invoke(realObject, boolValue);
-                break;
-            case "double":
-                double doubleValue = Double.parseDouble(att.getValue());
-                Method doubleSetter = clazz.getDeclaredMethod(setterName,double.class);
-                doubleSetter.invoke(realObject, doubleValue);
-                break;
+      switch(att.getDataType()){ //Reviso si es un tipo primitivo
+        case "int":
+          int intValue=Integer.parseInt(att.getValue());
+          Method intSetter = clazz.getDeclaredMethod(setterName, int.class);
+          intSetter.invoke(realObject, intValue);
+          break;
+        case "char":
+          char charValue = att.getValue().charAt(0);
+          //cArg[0] = char.class;
+          Method charSetter = clazz.getDeclaredMethod(setterName,char.class);
+          charSetter.invoke(realObject, charValue);
+          break;
+        case "boolean":
+          boolean boolValue = Boolean.parseBoolean(att.getValue());
+          Method boolSetter = clazz.getDeclaredMethod(setterName,boolean.class);
+          boolSetter.invoke(realObject, boolValue);
+          break;
+        case "double":
+          double doubleValue = Double.parseDouble(att.getValue());
+          Method doubleSetter = clazz.getDeclaredMethod(setterName,double.class);
+          doubleSetter.invoke(realObject, doubleValue);
+          break;
 
-            case "float":
-                float floatValue = Float.parseFloat(att.getValue());
-                Method floatSetter = clazz.getDeclaredMethod(setterName,float.class);
-                floatSetter.invoke(realObject, floatValue);
-                break;
+        case "float":
+          float floatValue = Float.parseFloat(att.getValue());
+          Method floatSetter = clazz.getDeclaredMethod(setterName,float.class);
+          floatSetter.invoke(realObject, floatValue);
+          break;
 
-            case  "long":
-                long longValue = Long.parseLong(att.getValue());
-                Method longtSetter = clazz.getDeclaredMethod(setterName,long.class);
-                longtSetter.invoke(realObject, longValue);
-                break;
+        case  "long":
+          long longValue = Long.parseLong(att.getValue());
+          Method longtSetter = clazz.getDeclaredMethod(setterName,long.class);
+          longtSetter.invoke(realObject, longValue);
+          break;
 
-            case  "short":
-                short shortValue = Short.parseShort(att.getValue());
-                Method shortSetter = clazz.getDeclaredMethod(setterName,short.class);
-                shortSetter.invoke(realObject, shortValue);
-                break;
+        case  "short":
+          short shortValue = Short.parseShort(att.getValue());
+          Method shortSetter = clazz.getDeclaredMethod(setterName,short.class);
+          shortSetter.invoke(realObject, shortValue);
+          break;
 
-            default://Sino no es un tipo primitivo...
-                Class<?> attClazz = Class.forName(att.getDataType()); //Creo una instancia Class de la clase del atributo para poder instanciarlo
-                Object attInstance = null;
-                if (isCustomObject(attClazz)) { //Si el atributo del objeto original no es un objecto primitivo
-                    String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
-                    attInstance = getObjectFromPersistedObjectQuery(hql); //Y lo asigno a la instancia del atributo
+        default://Sino no es un tipo primitivo...
+          Class<?> attClazz = Class.forName(att.getDataType()); //Creo una instancia Class de la clase del atributo para poder instanciarlo
+          Object attInstance = null;
 
-                } else { //Si el atributo es wrapper
-                    Constructor<?> attConstructor = attClazz.getConstructor(String.class); //Obtengo el constructor cuyo parametro recibe un String del atributo
-                    attInstance = attConstructor.newInstance(att.getValue()); //Le asigno una instancia
+          //if(attClazz.equals(ArrayList.class)) {
+          if(List.class.isAssignableFrom(attClazz)) {
+          //if(attClazz.equals(List.class)) {
+
+            String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'";
+            PersistedObject persistedArray = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
+
+            attInstance = persistedArray.getCollectionElements().stream().map(e -> {
+
+              try {
+                if(isCustomObject(Class.forName(e.getDataType()))){
+                  String hqElement = "from PersistedObject where id = '" + e.getElementObjectId() + "'"; //Lo levanto de la DB
+                  return getObjectFromPersistedObjectQuery(hqElement);
                 }
+                else {
+                  switch (e.getDataType()) { //Reviso si es un tipo primitivo
+                    case "int":
+                      return Integer.parseInt(e.getValue());
+                    case "char":
+                      return e.getValue().charAt(0);
+                    case "boolean":
+                      return Boolean.parseBoolean(e.getValue());
+                    case "double":
+                      return Double.parseDouble(e.getValue());
+                    case "float":
+                      return Float.parseFloat(e.getValue());
+                    case "long":
+                      return Long.parseLong(e.getValue());
+                    case "short":
+                      return Short.parseShort(e.getValue());
+                    default:
+                      Constructor<?> ElemConstructor = Class.forName(e.getDataType()).getConstructor(String.class);
+                      return ElemConstructor.newInstance(e.getValue());
+                  }
+                }
+              } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+              } catch (InstantiationException ex) {
+                throw new RuntimeException(ex);
+              } catch (IllegalAccessException ex) {
+                throw new RuntimeException(ex);
+              } catch (NoSuchMethodException ex) {
+                throw new RuntimeException(ex);
+              } catch (InvocationTargetException ex) {
+                throw new RuntimeException(ex);
+              }
+            }).collect(Collectors.toList());
 
-                Method setter = clazz.getDeclaredMethod(setterName, attClazz);
-                setter.invoke(realObject, attInstance);
-        }
+          }
+          else if (isCustomObject(attClazz)) { //Si el atributo del objeto original no es un objecto primitivo
+              String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
+              attInstance = getObjectFromPersistedObjectQuery(hql); //Y lo asigno a la instancia del atributo
+          }
+          else { //Si el atributo es wrapper
+              Constructor<?> attConstructor = attClazz.getConstructor(String.class); //Obtengo el constructor cuyo parametro recibe un String del atributo
+              attInstance = attConstructor.newInstance(att.getValue()); //Le asigno una instancia
+          }
+
+          Method setter = clazz.getDeclaredMethod(setterName, attClazz);
+          setter.invoke(realObject, attInstance);
+      }
     }
     return realObject;
   }
