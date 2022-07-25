@@ -38,6 +38,8 @@ public class PersistentObject {
   }
 
 
+
+
   public boolean store(long sId, Object o) throws IllegalAccessException {
     /*if (exists(sId, o.getClass())) {
       System.out.println("Existe y vamos a actualizar");
@@ -323,13 +325,47 @@ public class PersistentObject {
   public <T> T delete(long sId, Class<T> clazz) throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
     T object = null;
     if (exists(sId, clazz)) {
-      object = load(sId,clazz);
+      object = load(sId, clazz);
       String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
+      removeObjectFromQuery(hql);
+      /*
       PersistedObject persistedObject = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
+
+      persistedObject.getAttributes().forEach(att -> {
+        if(att.getAttributeObjectId() != null){
+          String hql2 = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
+
+          EntityManagerHelper.beginTransaction();
+          EntityManagerHelper.getEntityManager().remove((PersistedObject) EntityManagerHelper.createQuery(hql2).getSingleResult());
+          EntityManagerHelper.commit();
+        }
+      });
       EntityManagerHelper.beginTransaction();
       EntityManagerHelper.getEntityManager().remove(persistedObject);
       EntityManagerHelper.commit();
+    }*/
     }
     return object;
+  }
+  private void removeObjectFromQuery (String query) {
+    PersistedObject persistedObject = (PersistedObject) EntityManagerHelper.createQuery(query).getSingleResult();
+    persistedObject.getAttributes().forEach(att -> {
+      if(att.getAttributeObjectId() != null){
+        String hql = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
+        removeObjectFromQuery(hql);
+      }
+    });
+
+    persistedObject.getCollectionElements().forEach(att -> {
+      if(att.getElementObjectId() != null){
+        String hql = "from PersistedObject where id = '" + att.getElementObjectId() + "'"; //Lo levanto de la DB
+        removeObjectFromQuery(hql);
+      }
+    });
+
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().remove(persistedObject);
+    EntityManagerHelper.commit();
+
   }
 } //No borra recursivamente objetos dentro de objetos

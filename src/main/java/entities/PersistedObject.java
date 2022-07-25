@@ -1,6 +1,7 @@
 package entities;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,12 +21,14 @@ public class PersistedObject extends PersistentEntity {
   private List<CollectionElement> collectionElements;
 
   public PersistedObject() {
+    //this.collectionElements = new ArrayList<>();
   }
 
   public PersistedObject(Long ssId, String className, List<Attribute> attributes) {
     this.ssId = ssId;
     this.className = className;
     this.attributes = attributes;
+    this.collectionElements = new ArrayList<>();
   }
 
   public List<CollectionElement> getCollectionElements() {
