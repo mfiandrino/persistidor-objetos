@@ -2,16 +2,14 @@ package test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import objects.ClaseFantasma;
-import objects.Direccion;
-import objects.Persona1;
-import objects.Persona4;
+import objects.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import persistentobject.PersistentObject;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 public class PersistentObjectTest {
   private PersistentObject persistentObject;
@@ -19,12 +17,6 @@ public class PersistentObjectTest {
   @BeforeEach
   public void initialize() {
     persistentObject = new PersistentObject();
-  }
-
-  @Test
-  public void prueba() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
-    ClaseFantasma c = new ClaseFantasma();
-    persistentObject.store(1, c);
   }
 
   @Test
@@ -145,4 +137,21 @@ public class PersistentObjectTest {
     assertEquals("Argentina", personaRecuperada.getDireccion().getPais());
   }
 
+  @Test
+  public void unObjetoConUnaColeccionComoAtributoSeGuardaCorrectamente() throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
+    Direccion unaDireccion = new Direccion("Medrano",22,"C1920","CABA","BA","Argentina");
+    Direccion otraDireccion = new Direccion("Medrano2",222,"C19202","CABA2","BA2","Argentina2");
+    Direccion otraDireccionMas = new Direccion("Medrano3",223,"C19203","CABA3","BA3","Argentina3");
+    ArrayList<Direccion> direcciones = new ArrayList<>();
+    direcciones.add(otraDireccion);
+    direcciones.add(otraDireccionMas);
+
+    ArrayList<String> telefonos = new ArrayList<>();
+    telefonos.add("1234-5678");
+    telefonos.add("5678-1234");
+
+
+    Persona5 persona = new Persona5("Maxi", unaDireccion, direcciones, telefonos);
+    persistentObject.store(8,persona);
+  }
 }

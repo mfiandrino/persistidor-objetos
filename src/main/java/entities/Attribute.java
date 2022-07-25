@@ -3,6 +3,7 @@ package entities;
 import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,9 +18,9 @@ public class Attribute extends PersistentEntity {
   @Column
   private Integer attributeObjectId;
 
-  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+/*  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
   @JoinColumn(name="attribute_id", nullable=false)
-  private List<CollectionElement> collectionElements;
+  private List<CollectionElement> collectionElements;*/
 
   //Creo que hay que agragarle un collectionElement_id con onToMany
 
@@ -33,13 +34,13 @@ public class Attribute extends PersistentEntity {
     this.attributeObjectId = attributeObjectId;
   }
 
-  public List<CollectionElement> getCollectionElements() {
+/*  public List<CollectionElement> getCollectionElements() {
     return collectionElements;
   }
 
   public void setCollectionElements(List<CollectionElement> collectionElements) {
     this.collectionElements = collectionElements;
-  }
+  }*/
 
   public String getName() {
     return name;

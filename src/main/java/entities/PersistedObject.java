@@ -15,6 +15,10 @@ public class PersistedObject extends PersistentEntity {
   @JoinColumn(name="object_id", nullable=false)
   private List<Attribute> attributes;
 
+  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+  @JoinColumn(name="attribute_id", nullable=false)
+  private List<CollectionElement> collectionElements;
+
   public PersistedObject() {
   }
 
@@ -22,6 +26,14 @@ public class PersistedObject extends PersistentEntity {
     this.ssId = ssId;
     this.className = className;
     this.attributes = attributes;
+  }
+
+  public List<CollectionElement> getCollectionElements() {
+    return collectionElements;
+  }
+
+  public void setCollectionElements(List<CollectionElement> collectionElements) {
+    this.collectionElements = collectionElements;
   }
 
   public Long getSsId() {

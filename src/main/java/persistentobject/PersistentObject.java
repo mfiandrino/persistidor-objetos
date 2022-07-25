@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PersistentObject {
 
@@ -80,6 +81,14 @@ public class PersistentObject {
     return o.getClass().isAnnotationPresent(Persistable.class);
   }
 
+  private Boolean isFieldPersistable(Field f, Object o) {
+    return (isObjectPersistible(o) && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible(o) && f.isAnnotationPresent(Persistable.class));
+  }
+
+  private Class<?> getComponentType(List<?> list) {
+    return list.stream().findFirst().map(f -> f.getClass()).orElse(null);
+  }
+
   private PersistedObject crearPersistedObject(Long sId, Object o) throws IllegalAccessException {
     List<Attribute> attributes = new ArrayList<>();
 
@@ -87,8 +96,9 @@ public class PersistentObject {
     String className = o.getClass().getCanonicalName();
 
     for (Field f : fields) {
-      if((isObjectPersistible(o) && !f.isAnnotationPresent(NotPersistable.class)) || (!isObjectPersistible(o) && f.isAnnotationPresent(Persistable.class) )) {
+      if(isFieldPersistable(f,o)) {
         f.setAccessible(true);
+        Attribute att;
 
        /* if(f.getType().isArray()) {//Si es un array
 
@@ -132,29 +142,99 @@ public class PersistentObject {
           }
 
 
-        }else */if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
-            PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
+        }else */
+        if(f.getType().equals(ArrayList.class)) {
+          att = saveCollectionField(f,o);
+        }
+        else if(isCustomObject(f.getType())) { //Si no es de un tipo primitivo ni de sus wrappers
+          att = saveCustomObjectField(f,o);
+        }
+        else { //Si es un tipo primitivo o alguno de sus wrappers
+          att = savePrimitiveField(f,o);
+        }
+        attributes.add(att); //Agrego el atributo armado
+      }
+    }
+    return new PersistedObject(sId, className, attributes);
+  }
+
+/*  private Attribute createAttribute(Field f, Object o) throws IllegalAccessException {
+    Attribute a = new Attribute(f.getName(),
+        f.getGenericType().toString(),
+        null,
+        null);
+    a.setCollectionElements((ArrayList<CollectionElement>) f.get(o));
+    //a.setId(1);
+
+    return a;
+  }*/
+
+  private List<CollectionElement> convertToCollectionElementsList(List<?> list, Field f, Object o) {
+    if(isCustomObject(getComponentType(list))) {
+      return list.stream()
+          .map(e -> {
+            PersistedObject perObj = null; //Creo una instancia de PersistedObject para persistirla luego
+            try {
+              perObj = crearPersistedObject(null, e);
+            } catch (IllegalAccessException ex) {
+              throw new RuntimeException(ex);
+            }
             EntityManagerHelper.beginTransaction();
             EntityManagerHelper.getEntityManager().persist(perObj);
             EntityManagerHelper.commit();
-            Attribute att = new Attribute(f.getName(),
-                f.getType().toString().replace("class ", ""),
-            null,
-                perObj.getId());
 
-          attributes.add(att);
-        }else{ //Si es un tipo primitivo o alguno de sus wrappers
+            return new CollectionElement(e.getClass().toString().replace("class ", ""), null, perObj.getId());
+          }).collect(Collectors.toList());
 
-          Attribute att = new Attribute(f.getName(),
-              f.getType().toString().replace("class ", ""),
-              f.get(o).toString(),
-              null);
-
-          attributes.add(att);
-          }
-        }
     }
-    return new PersistedObject(sId, className, attributes);
+    else {
+      return list.stream()
+          .map(e -> new CollectionElement(e.getClass().toString().replace("class ", ""),
+              e.toString(),
+              null))
+          .collect(Collectors.toList());
+    }
+  }
+
+  private Attribute saveCollectionField(Field f, Object o) throws IllegalAccessException {
+    /*ArrayList<?> list = (ArrayList<?>) f.get(o);
+    if(isCustomObject(getComponentType(list))) { // Si es una coleccion de objetos
+
+    }*/
+    /*Attribute att = createAttribute(f,o); //Creo una instancia de PersistedObject para persistirla luego
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().persist(att);
+    EntityManagerHelper.commit();*/
+    PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
+
+    perObj.setCollectionElements(convertToCollectionElementsList((List<CollectionElement>) f.get(o), f, o));
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().persist(perObj);
+    EntityManagerHelper.commit();
+
+    return new Attribute(f.getName(),
+        f.getGenericType().toString(),
+        null,
+        perObj.getId());
+    //return null;
+  }
+
+  private Attribute savePrimitiveField(Field f, Object o) throws IllegalAccessException {
+    return new Attribute(f.getName(),
+        f.getType().toString().replace("class ", ""),
+        f.get(o).toString(),
+        null);
+  }
+  private Attribute saveCustomObjectField(Field f, Object o) throws IllegalAccessException {
+    PersistedObject perObj = crearPersistedObject(null, f.get(o)); //Creo una instancia de PersistedObject para persistirla luego
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().persist(perObj);
+    EntityManagerHelper.commit();
+
+    return new Attribute(f.getName(),
+        f.getType().toString().replace("class ", ""),
+        null,
+        perObj.getId());
   }
 
   public <T> T load(long sId, Class<T> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
