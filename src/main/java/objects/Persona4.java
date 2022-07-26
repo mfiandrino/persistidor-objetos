@@ -1,12 +1,11 @@
 package objects;
 
+import entities.NotPersistable;
 import entities.Persistable;
 @Persistable
 public class Persona4 {
   private String nombre;
   private Direccion direccion;
-
-
   public Persona4() {
   }
 
@@ -30,4 +29,5 @@ public class Persona4 {
   public void setDireccion(Direccion direccion) {
     this.direccion = direccion;
   }
+
 }

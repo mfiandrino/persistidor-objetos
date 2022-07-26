@@ -5,10 +5,10 @@ import entities.*;
 
 import javax.persistence.NoResultException;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PersistentObject {
@@ -37,43 +37,25 @@ public class PersistentObject {
     WRAPPER_TYPE_MAP.put(String.class, String.class);
   }
 
+  public boolean store(long sId, Object o) throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException {
 
 
+    Boolean res = false;
 
-  public boolean store(long sId, Object o) throws IllegalAccessException {
-    /*if (exists(sId, o.getClass())) {
-      System.out.println("Existe y vamos a actualizar");
-      String hql = "from PersistedObject where ssId = " + sId + " and className = '" + o.getClass().getName() + "'";
-      PersistedObject object = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
-      PersistedObject perObj = crearPersistedObject(sId,o);
-      object.setAttributes(perObj.getAttributes());
-      EntityManagerHelper.beginTransaction();
-      EntityManagerHelper.getEntityManager().merge(object);
-      EntityManagerHelper.commit();
-      return true;
+    if (exists(sId, o.getClass())) {
+      delete(sId, o.getClass());
+
+      updateAccessLog(sId);
+      res = true;
     }
-    else {*/
-      System.out.println("No Existe y vamos a almacenar");
-      PersistedObject perObj = crearPersistedObject(sId, o);
-      EntityManagerHelper.beginTransaction();
-      EntityManagerHelper.getEntityManager().persist(perObj);
-      EntityManagerHelper.commit();
-      return false;
-    //}
+    PersistedObject perObj = crearPersistedObject(sId, o);
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().persist(perObj);
+    EntityManagerHelper.commit();
+
+    updateAccessLog(sId);
+    return res;
   }
-
-  /*private PersistedObject updateObject(PersistedObject viejo, PersistedObject nuevo){
-    List<Attribute> lista_viejo = viejo.getAttributes();
-    List<Attribute> lista_nuevo = nuevo.getAttributes();
-    for(int i = 0; i < lista_viejo.size(); i++) {
-
-      if(objeto){
-        updateObject()
-      }
-      lista_viejo.set(i, lista_nuevo.get(i));
-
-    }
-  }*/
 
   private Boolean isCustomObject(Class<?> clazz) {
     return !WRAPPER_TYPE_MAP.containsKey(clazz);
@@ -183,8 +165,24 @@ public class PersistentObject {
 
     T object = null;
 
+    if(!exists(sId, clazz)) {
+      updateAccessLog(sId);
+      return null;
+    }
+
     try {
       object = (T) getObjectFromPersistedObjectQuery(hql);
+      T finalObject = object;
+    if(Arrays.stream(object.getClass().getDeclaredFields()).anyMatch(f -> {
+        f.setAccessible(true);
+        try {
+          return (f.get(finalObject) == null && !f.isAnnotationPresent(NotPersistable.class));
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      })){
+        throw new StructureChangedException();
+      }
     } catch (ClassNotFoundException ex) {
       throw new StructureChangedException();
     } catch (InstantiationException ex) {
@@ -197,6 +195,7 @@ public class PersistentObject {
       throw new StructureChangedException();
     }
 
+    updateAccessLog(sId);
     return object;
   }
 
@@ -335,33 +334,46 @@ public class PersistentObject {
     return true;
   }
 
+  private void updateAccessLog(long ssID){
+    AccessLog AcLog = null;
+    try {//Busca si está el ID en la base de datos
+      String hql = "from AccessLog where ssId="+ssID;
+      AcLog = (AccessLog) EntityManagerHelper.createQuery(hql).getSingleResult();
+
+      //Actualiza el último acceso
+      AcLog.setLastAccess(LocalDateTime.now());
+
+    } catch (NoResultException e) {//Si no está en la Base
+      //Crea un nuevo registro
+      AcLog = new AccessLog(ssID,LocalDateTime.now());
+    }
+
+    EntityManagerHelper.beginTransaction();
+    EntityManagerHelper.getEntityManager().merge(AcLog);//Merge actualiza o registra
+    EntityManagerHelper.commit();
+  }
+
   public long elapsedTime(long sId) {
-    return 1;
+    try {
+      String hql = "from AccessLog where ssId="+sId;
+      AccessLog accessLog = (AccessLog) EntityManagerHelper.createQuery(hql).getSingleResult();
+      return accessLog.getLastAccess().until(LocalDateTime.now(), ChronoUnit.MILLIS);
+    } catch (NoResultException e) {
+      return 0L;
+    }
   }
 
   public <T> T delete(long sId, Class<T> clazz) throws ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+
+    updateAccessLog(sId);
     T object = null;
     if (exists(sId, clazz)) {
       object = load(sId, clazz);
       String hql = "from PersistedObject where ssId = " + sId + " and className = '" + clazz.getName() + "'";
       removeObjectFromQuery(hql);
-      /*
-      PersistedObject persistedObject = (PersistedObject) EntityManagerHelper.createQuery(hql).getSingleResult();
-
-      persistedObject.getAttributes().forEach(att -> {
-        if(att.getAttributeObjectId() != null){
-          String hql2 = "from PersistedObject where id = '" + att.getAttributeObjectId() + "'"; //Lo levanto de la DB
-
-          EntityManagerHelper.beginTransaction();
-          EntityManagerHelper.getEntityManager().remove((PersistedObject) EntityManagerHelper.createQuery(hql2).getSingleResult());
-          EntityManagerHelper.commit();
-        }
-      });
-      EntityManagerHelper.beginTransaction();
-      EntityManagerHelper.getEntityManager().remove(persistedObject);
-      EntityManagerHelper.commit();
-    }*/
     }
+
+    updateAccessLog(sId);
     return object;
   }
   private void removeObjectFromQuery (String query) {
@@ -385,4 +397,4 @@ public class PersistentObject {
     EntityManagerHelper.commit();
 
   }
-} //No borra recursivamente objetos dentro de objetos
+}

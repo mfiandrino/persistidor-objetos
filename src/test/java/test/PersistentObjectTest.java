@@ -237,9 +237,9 @@ public class PersistentObjectTest {
     Direccion unaDireccion = new Direccion("Medrano",22,"C1920","CABA","BA","Argentina");
     Direccion otraDireccion = new Direccion("Medrano2",222,"C19202","CABA2","BA2","Argentina2");
     Direccion otraDireccionMas = new Direccion("Medrano3",223,"C19203","CABA3","BA3","Argentina3");
-    /*ArrayList<Direccion> direcciones = new ArrayList<>();
+    ArrayList<Direccion> direcciones = new ArrayList<>();
     direcciones.add(otraDireccion);
-    direcciones.add(otraDireccionMas);*/
+    direcciones.add(otraDireccionMas);
 
     Persona4 persona1 = new Persona4("Pedro",unaDireccion);
     Persona4 persona2 = new Persona4("Peter",otraDireccion);
@@ -247,9 +247,9 @@ public class PersistentObjectTest {
     habitantes.add(persona1);
     habitantes.add(persona2);
 
-    /*ArrayList<String> telefonos = new ArrayList<>();
+    ArrayList<String> telefonos = new ArrayList<>();
     telefonos.add("1234-5678");
-    telefonos.add("5678-1234");*/
+    telefonos.add("5678-1234");
 
     Casa unaCasa = new Casa("La casona", habitantes);
 
@@ -372,8 +372,33 @@ public class PersistentObjectTest {
   }
 
   @Test
-  public void unObjetoConValorNullSeGuarda() throws IllegalAccessException {
-    Direccion unaDireccion = null;
+  public void unObjetoQueYaExisteSeActualiza() throws ClassNotFoundException, InvocationTargetException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    Direccion unaDireccion = new Direccion("Medrano",22,"C1920","CABA","BA","Argentina");
+
     persistentObject.store(12, unaDireccion);
+
+    //Recuperamos la dirección
+    Direccion direccionRecuperada = persistentObject.load(12, unaDireccion.getClass());
+
+    assertEquals("Medrano", direccionRecuperada.getCalle());
+    assertEquals(22, direccionRecuperada.getNumero());
+    assertEquals("C1920", direccionRecuperada.getCodigoPostal());
+    assertEquals("CABA", direccionRecuperada.getLocalidad());
+    assertEquals("BA", direccionRecuperada.getProvincia());
+    assertEquals("Argentina", direccionRecuperada.getPais());
+
+    //Cambiamos la dirección
+    unaDireccion.setCalle("Mozart");
+    persistentObject.store(12, unaDireccion);
+
+    direccionRecuperada = persistentObject.load(12, unaDireccion.getClass());
+
+    assertEquals("Mozart", direccionRecuperada.getCalle());
+    assertEquals(22, direccionRecuperada.getNumero());
+    assertEquals("C1920", direccionRecuperada.getCodigoPostal());
+    assertEquals("CABA", direccionRecuperada.getLocalidad());
+    assertEquals("BA", direccionRecuperada.getProvincia());
+    assertEquals("Argentina", direccionRecuperada.getPais());
   }
+
 }
